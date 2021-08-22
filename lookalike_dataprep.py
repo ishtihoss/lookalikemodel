@@ -62,17 +62,52 @@ jdf = ex_df1.join(df_pb2, ex_df1.loc_geohash==df_pb2.geohash9, how='left')
 
 df_res = jdf.filter(F.col('MAIN_CLASS')=='EATING PLACES/RESTAURANTS')
 
+# Take fastfood segment
 
+df_ff = df_res.filter(F.col('SIC8_DESCRIPTION')=='FAST FOOD RESTAURANTS AND STANDS')
 
+# create set-list function to be used in a UDF
 
-combine = df_res.groupBy('ifa', 'NAME').count()
-cc = combine.groupBy('ifa').pivot('NAME').agg({'count':'max'})
+def set_items(items):
+    item_set = set(items)
+    return list(item_set)
+
+# agg data for passing on to UDF
+
+df_prep = df_prep.groupBy('ifa','event_date')
+
+df_pro = df.groupBy('ifa','utc_date').agg(F.collect_set(df.location_name).alias('location_name'))
+df_pro =df_pro.select('location_name')
+udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(),True))
+df_pro = df_pro.withColumn('items', udf_set_items(df_pro.location_name)).drop('location_name')
+
+#combine = df_res.groupBy('ifa', 'NAME').count()
+#cc = combine.groupBy('ifa').pivot('NAME').agg({'count':'max'}) # Pivot fails because 'NAME' col has too many distinct values
 
 # pivot the data
 
 # jdf.groupBy('ifa').pivot('NAME').show(10)  # doesn't work because too many distinct values
 udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(),True))
 gg = jdf.withColumn('items', udf_set_items(jdf.NAME)).drop('NAME')
+
+# Jena's code that provides an alternative to standard pivot
+
+def set_items(items):
+    ifa_Lis = set(items)
+    return list(ifa_Lis)
+
+
+
+########################### total ###########################
+
+df_pro = df.groupBy('ifa','utc_date').agg(F.collect_set(df.location_name).alias('location_name'))
+df_pro =df_pro.select('location_name')
+udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(),True))
+df_pro = df_pro.withColumn('items', udf_set_items(df_pro.location_name)).drop('location_name')
+
+
+
+
 
 # pull BK customers
 
