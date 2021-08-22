@@ -74,7 +74,10 @@ def set_items(items):
 
 # agg data for passing on to UDF
 
-df_prep = df_prep.groupBy('ifa','event_date')
+df_prep = df_ff.groupBy('ifa','event_date').agg(F.collect_set(df_ff.NAME).alias('NAME'))
+df_prep = df_prep.select('NAME')
+udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(), True))
+df_prep = df_prep.withColumn('items',udf_set_items(df_prep.NAME))
 
 df_pro = df.groupBy('ifa','utc_date').agg(F.collect_set(df.location_name).alias('location_name'))
 df_pro =df_pro.select('location_name')
