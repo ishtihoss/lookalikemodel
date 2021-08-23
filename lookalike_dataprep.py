@@ -11,6 +11,7 @@ from pyspark.sql.window import Window
 from pyspark.sql.functions import lit
 from pyspark.sql.functions import explode
 import pygeohash as pgh
+from pyspark.ml.fpm import FPGrowth
 
 # Ingest boost data
 path = 's3a://ada-prod-data/etl/service/boost/daily/MY/202101*'
@@ -79,10 +80,31 @@ df_prep = df_prep.select('NAME')
 udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(), True))
 df_prep = df_prep.withColumn('items',udf_set_items(df_prep.NAME)).drop('NAME')
 
-df_pro = df.groupBy('ifa','utc_date').agg(F.collect_set(df.location_name).alias('location_name'))
-df_pro =df_pro.select('location_name')
-udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(),True))
-df_pro = df_pro.withColumn('items', udf_set_items(df_pro.location_name)).drop('location_name')
+# replace individual fast food restaurant name with generic label "fast food"
+
+df_p = df_res.withColumn('gen_name',\
+    F.when(F.col('SIC8_DESCRIPTION')=='FAST FOOD RESTAURANTS AND STANDS', \
+    "Fast Food Lover").otherwise(F.col("NAME"))).drop('NAME')
+
+df_prep1 = 
+
+fp = FPGrowth(minSupport=0.02, minConfidence=0.3)
+fpm = fp.fit(df_prep)
+fpm.freqItemsets.show(5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #combine = df_res.groupBy('ifa', 'NAME').count()
 #cc = combine.groupBy('ifa').pivot('NAME').agg({'count':'max'}) # Pivot fails because 'NAME' col has too many distinct values
@@ -93,20 +115,7 @@ df_pro = df_pro.withColumn('items', udf_set_items(df_pro.location_name)).drop('l
 udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(),True))
 gg = jdf.withColumn('items', udf_set_items(jdf.NAME)).drop('NAME')
 
-# Jena's code that provides an alternative to standard pivot
 
-def set_items(items):
-    ifa_Lis = set(items)
-    return list(ifa_Lis)
-
-
-
-########################### total ###########################
-
-df_pro = df.groupBy('ifa','utc_date').agg(F.collect_set(df.location_name).alias('location_name'))
-df_pro =df_pro.select('location_name')
-udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(),True))
-df_pro = df_pro.withColumn('items', udf_set_items(df_pro.location_name)).drop('location_name')
 
 
 
