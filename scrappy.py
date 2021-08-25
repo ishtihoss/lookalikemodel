@@ -8,11 +8,12 @@ from pyspark.sql.window import Window
 from pyspark.sql.functions import lit
 from pyspark.sql.functions import explode
 from pyspark.sql.functions import month
+import pygeohash as pgh
 
 
 # Step 1: Ingest all MY data
 
-df = 's3a://ada-prod-data/etl/service/boost/daily/MY/'
+df = spark.read.parquet('s3a://ada-prod-data/etl/service/boost/daily/MY/2021*')
 
 # flatten data
 
@@ -95,7 +96,7 @@ df_ls = spark.read.parquet(ls_path).select('ifa','lifestage_name_m1','lifestage_
 
 df_z3 = df_z2.join(df_ls, on='ifa', how='left')
 # Step 2
-
+df_z3.where(F.col('freq_ffc').isNull())
 Enrich data with affluence, life stage and persona
 
 # Step 3

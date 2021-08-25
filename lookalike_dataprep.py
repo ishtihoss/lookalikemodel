@@ -86,10 +86,13 @@ df_p = df_res.withColumn('gen_name',\
     F.when(F.col('SIC8_DESCRIPTION')=='FAST FOOD RESTAURANTS AND STANDS', \
     "Fast Food Lover").otherwise(F.col("NAME"))).drop('NAME')
 
-df_prep1 = 
+df_prep1 = df_p.groupBy('ifa').agg(F.collect_set(df_p.gen_name).alias('NAME'))
+df_prep1 = df_prep1.select('NAME')
+udf_set_items = F.udf(set_items, T.ArrayType(T.StringType(),True))
+df_prep1 = df_prep1.withColumn('items',udf_set_items(df_prep1.NAME)).drop('NAME')
 
 fp = FPGrowth(minSupport=0.02, minConfidence=0.3)
-fpm = fp.fit(df_prep)
+fpm = fp.fit(df_prep1)
 fpm.freqItemsets.show(5)
 
 
