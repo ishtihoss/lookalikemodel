@@ -95,16 +95,3 @@ ls_path = 's3a://ada-platform-components/lifestages/monthly_predictions/MY/*/202
 df_ls = spark.read.parquet(ls_path).select('ifa','lifestage_name_m1','lifestage_name_m2')
 
 df_z3 = df_z2.join(df_ls, on='ifa', how='left')
-<<<<<<< HEAD
-# Step 2
-df_z3.where(F.col('freq_ffc').isNull())
-Enrich data with affluence, life stage and persona
-
-# Step 3
-
-Time to try some kind of classification algorithm (within cosmose data)
-
-This will help: https://spark.apache.org/docs/3.1.1/api/python/reference/pyspark.ml.html
-=======
-
->>>>>>> 9673c37d7541ac1243d90dbb2ccd3910f75142a2
